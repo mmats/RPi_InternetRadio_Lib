@@ -12,13 +12,21 @@ public:
 
 	void startStream();
 	void stopStream();
+
 	void increaseStreamNr();
 	void decreaseStreamNr();
+
 	unsigned getStreamNr();
+	std::string getStreamName();
+	std::string getInterpret();
+	std::string getTitle();
+	void getStreamInfos();
 
 private:
 	bool 		streamRunning;
 	unsigned 	streamNr;
+	std::string streamURL;
+	std::string infoURL;
 	std::string streamName;
 	std::string currentInterpret;
 	std::string currentTitle;

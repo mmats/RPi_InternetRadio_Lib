@@ -1,8 +1,13 @@
 #include "IRadio.h"
-#include <cstdlib>
-#include <sstream>
-#include <string.h>
+
 #include <unistd.h>
+#include <cstddef>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <iterator>
+#include <string>
 #include <sys/types.h>
 #include <signal.h>
 
@@ -41,42 +46,28 @@ void IRadio::startStream()
 	{
 		case 0:
 			// rockXradio
-			if( (streamChildPID=fork()) == 0 )
-			{
-				std::system("mplayer http://www.reliastream.com/cast/tunein.php/rockxradio/playlist.pls");
-				exit(0);
-			}
-			streamName    = "rockXradio";
-			streamRunning = true;
+			streamURL = "http://www.reliastream.com/cast/tunein.php/rockxradio/playlist.pls";
+			infoURL   = "http://tunein.com/radio/rockXradio-s125675/";
 			break;
-
 		case 1:
-			// Hard Drivin’ Radio
-			if( (streamChildPID=fork()) == 0 )
-			{
-				std::system("mplayer http://listen.djcmedia.com/harddrivinradiohigh");
-				exit(0);
-			}
-			streamName    = "Hard Drivin’ Radio";
-			streamRunning = true;
+			// Hard Drivin Radio
+			streamURL = "http://listen.djcmedia.com/harddrivinradiohigh";
+			infoURL   = "http://tunein.com/radio/HDRN---Hard-Drivin-Radio-s116601/";
 			break;
-
 		case 2:
 			// HDR Country
-			if( (streamChildPID=fork()) == 0 )
-			{
-				std::system("mplayer http://listen.djcmedia.com/allhdrcountryhigh");
-				exit(0);
-			}
-			streamName    = "HDR Country";
-			streamRunning = true;
-			break;
-		default:
-			// do nothing
-			streamName    = "ERROR";
-			streamNr	  = 0;
+			streamURL = "http://listen.djcmedia.com/allhdrcountryhigh";
+			infoURL   = "http://tunein.com/radio/HDRN---All-HDR-Country-Radio-s141757/";
 			break;
 	}
+
+	if( (streamChildPID=fork()) == 0 )
+	{
+		std::string cmd = "mplayer " + streamURL;
+		std::system(cmd.c_str());
+		exit(0);
+	}
+	streamRunning = true;
 }
 
 void IRadio::stopStream()
@@ -105,4 +96,82 @@ void IRadio::decreaseStreamNr()
 unsigned IRadio::getStreamNr()
 {
 	return streamNr;
+}
+
+std::string IRadio::getStreamName()
+{
+	return streamName;
+}
+
+std::string IRadio::getInterpret()
+{
+	return currentInterpret;
+}
+
+std::string IRadio::getTitle()
+{
+	return currentTitle;
+}
+
+void IRadio::getStreamInfos()
+{
+	std::string file_name = "index.html";
+	char *path = get_current_dir_name();
+	std::string sFile(path);
+	sFile.append("/").append(file_name);
+
+	// delete file that might exist
+	std::string cmd = "rm " + file_name;
+	std::system(cmd.c_str());
+
+	// get html file from tuneIn
+	cmd = "wget " + infoURL;
+	std::system(cmd.c_str());
+
+    // read entire file into string
+    std::ifstream is(sFile, std::ifstream::binary);
+    std::string fileStr;
+    if(is)
+    {
+        is.seekg(0, is.end);
+        int length = is.tellg();
+        is.seekg(0, is.beg);
+
+        fileStr.resize(length, ' ');
+        char* begin = &*fileStr.begin();
+
+        is.read(begin, length);
+        is.close();
+    }
+
+    std::string strStart, strEnd;
+    std::size_t foundStart, foundEnd;
+
+    strStart   = "<meta property=\"og:title\" content=\"";
+    foundStart = fileStr.find( strStart ) + 35;
+    fileStr    = fileStr.substr( foundStart );
+
+    strEnd     = "\" />";
+    foundEnd   = fileStr.find( strEnd );
+    std::string streamName = fileStr.substr( 0, foundEnd );			// save stream name
+
+    strStart   = "<div class=\"now-playing\">Now Playing:</div>";
+    strEnd     = "<div id=\"stationNowPlaying\">";
+    foundStart = fileStr.find( strStart );
+    foundEnd   = fileStr.find( strEnd );
+    fileStr    = fileStr.substr( foundStart, foundEnd-foundStart );
+    strStart   = "behavior=\"scrolling\">";
+    foundStart = fileStr.find( strStart ) + 21;
+    fileStr    = fileStr.substr( foundStart );
+    strEnd     = "</div>";
+    foundEnd   = fileStr.find( strEnd );
+    fileStr    = fileStr.substr( 0, foundEnd );
+
+    strEnd     = " - ";
+    foundEnd   = fileStr.find( strEnd );
+    currentTitle = fileStr.substr( 0, foundEnd );					// save current track
+
+    strStart   = " - ";
+    foundStart = fileStr.find( strStart ) + 3;
+    currentInterpret = fileStr.substr( foundStart );				// save current interpreter
 }
