@@ -153,7 +153,7 @@ void IRadio::getStreamInfos()
 
     strEnd     = "\" />";
     foundEnd   = fileStr.find( strEnd );
-    std::string streamName = fileStr.substr( 0, foundEnd );			// save stream name
+    streamName = fileStr.substr( 0, foundEnd );						// save stream name
 
     strStart   = "<div class=\"now-playing\">Now Playing:</div>";
     strEnd     = "<div id=\"stationNowPlaying\">";
@@ -165,13 +165,21 @@ void IRadio::getStreamInfos()
     fileStr    = fileStr.substr( foundStart );
     strEnd     = "</div>";
     foundEnd   = fileStr.find( strEnd );
-    fileStr    = fileStr.substr( 0, foundEnd );
+    if( foundEnd== 0 )
+    {
+    	currentTitle = " ";											// save empty title if no info is available
+    	currentInterpret = " ";										// save empty interpreter if no info is available
+    }
+    else
+    {
+		fileStr    = fileStr.substr( 0, foundEnd );
 
-    strEnd     = " - ";
-    foundEnd   = fileStr.find( strEnd );
-    currentTitle = fileStr.substr( 0, foundEnd );					// save current track
+		strEnd     = " - ";
+		foundEnd   = fileStr.find( strEnd );
+		currentTitle = fileStr.substr( 0, foundEnd );				// save current track
 
-    strStart   = " - ";
-    foundStart = fileStr.find( strStart ) + 3;
-    currentInterpret = fileStr.substr( foundStart );				// save current interpreter
+		strStart   = " - ";
+		foundStart = fileStr.find( strStart ) + 3;
+		currentInterpret = fileStr.substr( foundStart );			// save current interpreter
+    }
 }
