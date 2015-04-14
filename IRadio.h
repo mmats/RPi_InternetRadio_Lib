@@ -23,9 +23,12 @@ public:
 	void getStreamInfos();
 
 private:
+	std::string getWebPageContent( std::string URL, std::string fileName );
+
 	bool 		streamRunning;
 	unsigned 	streamNr;
 	std::string streamURL;
+	std::string streamURLinfo;
 	std::string infoURL;
 	std::string streamName;
 	std::string currentInterpret;

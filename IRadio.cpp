@@ -46,20 +46,20 @@ void IRadio::startStream()
 	{
 		case 0:
 			// rockXradio
-			streamURL = "http://www.reliastream.com/cast/tunein.php/rockxradio/playlist.pls";
-			infoURL   = "http://tunein.com/radio/rockXradio-s125675/";
+			infoURL = "http://tunein.com/radio/rockXradio-s125675/";
 			break;
 		case 1:
 			// Hard Drivin Radio
-			streamURL = "http://listen.djcmedia.com/harddrivinradiohigh";
-			infoURL   = "http://tunein.com/radio/HDRN---Hard-Drivin-Radio-s116601/";
+			infoURL = "http://tunein.com/radio/HDRN---Hard-Drivin-Radio-s116601/";
 			break;
 		case 2:
 			// HDR Country
-			streamURL = "http://listen.djcmedia.com/allhdrcountryhigh";
-			infoURL   = "http://tunein.com/radio/HDRN---All-HDR-Country-Radio-s141757/";
+			infoURL = "http://tunein.com/radio/HDRN---All-HDR-Country-Radio-s141757/";
 			break;
 	}
+
+	while( streamURL.empty() )
+		getStreamInfos();
 
 	if( (streamChildPID=fork()) == 0 )
 	{
@@ -115,71 +115,103 @@ std::string IRadio::getTitle()
 
 void IRadio::getStreamInfos()
 {
-	std::string file_name = "index.html";
-	char *path = get_current_dir_name();
-	std::string sFile(path);
-	sFile.append("/").append(file_name);
-
-	// delete file that might exist
-	std::string cmd = "rm " + file_name;
-	std::system(cmd.c_str());
-
-	// get html file from tuneIn
-	cmd = "wget " + infoURL;
-	std::system(cmd.c_str());
-
-    // read entire file into string
-    std::ifstream is(sFile, std::ifstream::binary);
-    std::string fileStr;
-    if(is)
-    {
-        is.seekg(0, is.end);
-        int length = is.tellg();
-        is.seekg(0, is.beg);
-
-        fileStr.resize(length, ' ');
-        char* begin = &*fileStr.begin();
-
-        is.read(begin, length);
-        is.close();
-    }
-
+    std::string fileStr, tmpStr;
     std::string strStart, strEnd;
     std::size_t foundStart, foundEnd;
 
-    strStart   = "<meta property=\"og:title\" content=\"";
-    foundStart = fileStr.find( strStart ) + 35;
-    fileStr    = fileStr.substr( foundStart );
+	fileStr = getWebPageContent( infoURL, "tunein_info" );
 
-    strEnd     = "\" />";
-    foundEnd   = fileStr.find( strEnd );
-    streamName = fileStr.substr( 0, foundEnd );						// save stream name
-
-    strStart   = "<div class=\"now-playing\">Now Playing:</div>";
-    strEnd     = "<div id=\"stationNowPlaying\">";
+    strStart   = "TuneIn.payload";
     foundStart = fileStr.find( strStart );
-    foundEnd   = fileStr.find( strEnd );
-    fileStr    = fileStr.substr( foundStart, foundEnd-foundStart );
-    strStart   = "behavior=\"scrolling\">";
-    foundStart = fileStr.find( strStart ) + 21;
     fileStr    = fileStr.substr( foundStart );
-    strEnd     = "</div>";
-    foundEnd   = fileStr.find( strEnd );
-    if( foundEnd== 0 )
+    strEnd     = "}}}";
+    foundEnd   = fileStr.find( strEnd ) + strStart.length();
+    fileStr    = fileStr.substr( 0, foundEnd );
+
+    // find stream name
+    strStart   = "\"description\":\"";
+    foundStart = fileStr.find( strStart );
+    tmpStr     = fileStr.substr( foundStart );
+    strEnd     = "\"";
+    foundEnd   = tmpStr.find( strEnd, strStart.length() );
+    streamName = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
+
+    // find song information
+    strStart   = "\"SongPlayingTitle\":";
+    foundStart = fileStr.find( strStart );
+    tmpStr     = fileStr.substr( foundStart );
+    strEnd     = ",";
+    foundEnd   = tmpStr.find( strEnd, strStart.length() );
+    tmpStr     = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
+    if( tmpStr == "null" )
     {
-    	currentTitle = " ";											// save empty title if no info is available
-    	currentInterpret = " ";										// save empty interpreter if no info is available
+    	currentTitle	 = "T";
+    	currentInterpret = "I";
     }
     else
     {
-		fileStr    = fileStr.substr( 0, foundEnd );
-
-		strEnd     = " - ";
-		foundEnd   = fileStr.find( strEnd );
-		currentTitle = fileStr.substr( 0, foundEnd );				// save current track
-
-		strStart   = " - ";
-		foundStart = fileStr.find( strStart ) + 3;
-		currentInterpret = fileStr.substr( foundStart );			// save current interpreter
+    	strEnd     = " - ";
+    	foundEnd   = tmpStr.find( strEnd );
+    	currentTitle	 = tmpStr.substr( foundEnd+strEnd.length(), tmpStr.length()-foundEnd-strEnd.length()-1 );
+    	currentInterpret = tmpStr.substr( 1, foundEnd-1 );
     }
+
+    // find stream URL info
+    strStart   = "\"StreamUrl\":\"";
+    foundStart = fileStr.find( strStart );
+    tmpStr     = fileStr.substr( foundStart );
+    strEnd     = "\"";
+    foundEnd   = tmpStr.find( strEnd, strStart.length() );
+    streamURLinfo  = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
+
+  	fileStr = getWebPageContent( streamURLinfo, "streamurl" );
+
+    // find real stream URL
+    strStart   = "\"Url\": \"";
+	foundStart = fileStr.find( strStart );
+	tmpStr     = fileStr.substr( foundStart );
+	strEnd     = "\"";
+	foundEnd   = tmpStr.find( strEnd, strStart.length() );
+	streamURL  = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
+}
+
+std::string IRadio::getWebPageContent( std::string URL, std::string fileName )
+{
+	std::string fileStr{}, cmd{};
+
+	// get path
+	char *path = get_current_dir_name();
+	std::string sFile(path);
+	sFile.append("/").append(fileName);
+
+	// get content from webpage
+	cmd = "wget -O " + fileName + " -o log_" + fileName + " " + URL;
+	std::system(cmd.c_str());
+
+	//sleep(1);
+
+    // read entire file into string
+    do{
+    	std::ifstream is(sFile, std::ifstream::binary);
+		if(is)
+		{
+			is.seekg(0, is.end);
+			int length = is.tellg();
+			is.seekg(0, is.beg);
+
+			fileStr.resize(length, ' ');
+			char* begin = &*fileStr.begin();
+
+			is.read(begin, length);
+			is.close();
+		}
+    }while( fileStr.empty() );
+
+	// remove generated file
+	cmd = "rm " + fileName;
+	std::system(cmd.c_str());
+	cmd = "rm log_" + fileName;
+	std::system(cmd.c_str());
+
+	return fileStr;
 }
