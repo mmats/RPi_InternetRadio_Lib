@@ -31,7 +31,6 @@ IRadio::IRadio()
 	currentTitle		= "";
 	streamChildPID		= 0;
 }
-
 IRadio::~IRadio()
 {
 	// set standard audio output device back to automatic
@@ -72,7 +71,6 @@ void IRadio::startStream()
 	}
 	streamRunning = true;
 }
-
 void IRadio::stopStream()
 {
 	if( streamRunning == true )
@@ -94,7 +92,6 @@ void IRadio::increaseStreamNr()
 		++streamNr;
 	startStream();
 }
-
 void IRadio::decreaseStreamNr()
 {
 	if(streamNr>0)
@@ -106,17 +103,14 @@ unsigned IRadio::getStreamNr()
 {
 	return streamNr;
 }
-
 std::string IRadio::getStreamName()
 {
 	return streamName;
 }
-
 std::string IRadio::getInterpret()
 {
 	return currentInterpret;
 }
-
 std::string IRadio::getTitle()
 {
 	return currentTitle;
@@ -183,21 +177,32 @@ void IRadio::getStreamInfos()
 	foundEnd   = tmpStr.find( strEnd, strStart.length() );
 	streamURL  = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
 }
-
 std::string IRadio::getWebPageContent( std::string URL, std::string fileName )
 {
-	std::string fileStr{}, cmd{};
-
-	// get path
-	char *path = get_current_dir_name();
-	std::string sFile(path);
-	sFile.append("/").append(fileName);
+	std::string cmd{}, fileStr{};
 
 	// get content from webpage
 	cmd = "wget -O " + fileName + " -o log_" + fileName + " " + URL;
 	std::system(cmd.c_str());
 
-	//sleep(1);
+	fileStr = getFileContent( fileName );
+
+	// remove generated file
+	cmd = "rm " + fileName;
+	std::system(cmd.c_str());
+	cmd = "rm log_" + fileName;
+	std::system(cmd.c_str());
+
+	return fileStr;
+}
+std::string IRadio::getFileContent( std::string fileName )
+{
+	std::string fileStr{};
+
+	// get path
+	char *path = get_current_dir_name();
+	std::string sFile(path);
+	sFile.append("/").append(fileName);
 
     // read entire file into string
     do{
@@ -216,11 +221,5 @@ std::string IRadio::getWebPageContent( std::string URL, std::string fileName )
 		}
     }while( fileStr.empty() );
 
-	// remove generated file
-	cmd = "rm " + fileName;
-	std::system(cmd.c_str());
-	cmd = "rm log_" + fileName;
-	std::system(cmd.c_str());
-
-	return fileStr;
+    return fileStr;
 }

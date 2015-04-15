@@ -24,6 +24,7 @@ public:
 
 private:
 	std::string getWebPageContent( std::string URL, std::string fileName );
+	std::string getFileContent( std::string fileName );
 
 	bool 		streamRunning;
 	unsigned 	streamNr;
