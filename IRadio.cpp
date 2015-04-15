@@ -152,15 +152,15 @@ void IRadio::getStreamInfos()
     tmpStr     = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
     if( tmpStr == "null" )
     {
-    	currentTitle	 = "T";
     	currentInterpret = "I";
+    	currentTitle	 = "T";
     }
     else
     {
     	strEnd     = " - ";
     	foundEnd   = tmpStr.find( strEnd );
-    	currentTitle	 = tmpStr.substr( foundEnd+strEnd.length(), tmpStr.length()-foundEnd-strEnd.length()-1 );
-    	currentInterpret = tmpStr.substr( 1, foundEnd-1 );
+    	currentInterpret = tmpStr.substr( foundEnd+strEnd.length(), tmpStr.length()-foundEnd-strEnd.length()-1 );
+    	currentTitle     = tmpStr.substr( 1, foundEnd-1 );
     }
 
     // find stream URL info
