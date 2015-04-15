@@ -66,7 +66,7 @@ void IRadio::startStream()
 
 	if( (streamChildPID=fork()) == 0 )
 	{
-		std::string cmd = "mplayer " + streamURL;
+		std::string cmd = "mplayer -really-quiet " + streamURL;
 		std::system(cmd.c_str());
 		exit(0);
 	}
