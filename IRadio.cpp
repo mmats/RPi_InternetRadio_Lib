@@ -23,6 +23,9 @@ IRadio::IRadio()
 
 	streamRunning		= false;
 	streamNr			= 0;
+	infoURL 			= "";
+	streamURL 			= "";
+	streamURLinfo 		= "";
 	streamName			= "";
 	currentInterpret	= "";
 	currentTitle		= "";
@@ -77,6 +80,12 @@ void IRadio::stopStream()
 		system("killall mplayer");
 		streamRunning = false;
 	}
+
+	streamURL 			= "";
+	streamURLinfo 		= "";
+	streamName			= "";
+	currentInterpret	= "";
+	currentTitle		= "";
 }
 
 void IRadio::increaseStreamNr()
