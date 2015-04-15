@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iterator>
 #include <string>
+#include <vector>
 #include <sys/types.h>
 #include <signal.h>
 
@@ -44,21 +45,24 @@ void IRadio::startStream()
 {
 	stopStream();
 
-	switch( streamNr )
-	{
-		case 0:
-			// rockXradio
-			infoURL = "http://tunein.com/radio/rockXradio-s125675/";
-			break;
-		case 1:
-			// Hard Drivin Radio
-			infoURL = "http://tunein.com/radio/HDRN---Hard-Drivin-Radio-s116601/";
-			break;
-		case 2:
-			// HDR Country
-			infoURL = "http://tunein.com/radio/HDRN---All-HDR-Country-Radio-s141757/";
-			break;
-	}
+	// get URLs from file
+	std::istringstream is( getFileContent( "RPi_Radio_Streams" ) );
+    std::vector<std::string> v{};
+    auto i = 0;
+    while( is )
+    {
+    	v.resize( v.size()+1 );
+    	is >> v.at(i++);
+    }
+    v.resize( v.size()-1 );
+
+    // detect over- and underflow
+    if( streamNr < 0 )
+    	streamNr = 0;
+    else if( streamNr > v.size()-1 )
+    	streamNr = v.size()-1;
+
+    infoURL = v.at( streamNr );
 
 	while( streamURL.empty() )
 		getStreamInfos();
@@ -88,13 +92,13 @@ void IRadio::stopStream()
 
 void IRadio::increaseStreamNr()
 {
-	if(streamNr<2)
+	//if(streamNr<2)
 		++streamNr;
 	startStream();
 }
 void IRadio::decreaseStreamNr()
 {
-	if(streamNr>0)
+	//if(streamNr>0)
 		--streamNr;
 	startStream();
 }
