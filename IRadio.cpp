@@ -103,6 +103,18 @@ void IRadio::decreaseStreamNr()
 	startStream();
 }
 
+bool IRadio::streamHasChanged()
+{
+	static unsigned oldStream = streamNr;
+
+	if( streamNr != oldStream )
+	{
+		oldStream = streamNr;
+		return true;
+	}
+
+	return false;
+}
 unsigned IRadio::getStreamNr()
 {
 	return streamNr;

@@ -16,6 +16,7 @@ public:
 	void increaseStreamNr();
 	void decreaseStreamNr();
 
+	bool streamHasChanged();
 	unsigned getStreamNr();
 	std::string getStreamName();
 	std::string getInterpret();
