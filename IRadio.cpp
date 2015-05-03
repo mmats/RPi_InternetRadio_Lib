@@ -92,24 +92,32 @@ void IRadio::stopStream()
 
 void IRadio::increaseStreamNr()
 {
-	//if(streamNr<2)
-		++streamNr;
+	++streamNr;
 	startStream();
 }
 void IRadio::decreaseStreamNr()
 {
-	//if(streamNr>0)
-		--streamNr;
+	--streamNr;
 	startStream();
 }
 
 bool IRadio::streamHasChanged()
 {
-	static unsigned oldStream = streamNr;
+	static unsigned    laststreamNr      = -1;
+	static std::string laststreamName    = "";
+	static std::string lastInterpret     = "";
+	static std::string lastTitle         = "";
 
-	if( streamNr != oldStream )
+	if( (streamNr          != laststreamNr)      ||
+		(streamName        != laststreamName)    ||
+	    (currentInterpret  != lastInterpret)     ||
+	    (currentTitle      != lastTitle) )
 	{
-		oldStream = streamNr;
+		laststreamNr      = streamNr;
+		laststreamName    = streamName;
+		lastInterpret     = currentInterpret;
+		lastTitle         = currentTitle;
+
 		return true;
 	}
 
