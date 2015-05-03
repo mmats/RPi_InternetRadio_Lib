@@ -123,6 +123,10 @@ bool IRadio::streamHasChanged()
 
 	return false;
 }
+bool IRadio::streamIsRunning()
+{
+	return streamRunning;
+}
 unsigned IRadio::getStreamNr()
 {
 	return streamNr;
