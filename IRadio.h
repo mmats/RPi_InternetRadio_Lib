@@ -12,6 +12,7 @@ public:
 
 	void startStream();
 	void stopStream();
+	void stopOrResumeStream();
 
 	void increaseStreamNr();
 	void decreaseStreamNr();

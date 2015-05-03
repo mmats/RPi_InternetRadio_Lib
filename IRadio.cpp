@@ -69,25 +69,39 @@ void IRadio::startStream()
 
 	if( (streamChildPID=fork()) == 0 )
 	{
-		std::string cmd = "mplayer -really-quiet " + streamURL;
+//		std::string cmd = "mplayer -really-quiet " + streamURL;
+		std::string cmd = "mplayer file > /dev/null 2>&1 " + streamURL;
 		std::system(cmd.c_str());
 		exit(0);
+		std::cout << "Child: Should never reach this line of code!\n";
 	}
 	streamRunning = true;
 }
 void IRadio::stopStream()
 {
-	if( streamRunning == true )
+	if( streamIsRunning() )
 	{
 		system("killall mplayer");
-		streamRunning = false;
+		streamRunning    = false;
+		streamURL        = "";
+		streamURLinfo    = "";
+		streamName       = "";
+		currentInterpret = "";
+		currentTitle     = "";
 	}
-
-	streamURL 			= "";
-	streamURLinfo 		= "";
-	streamName			= "";
-	currentInterpret	= "";
-	currentTitle		= "";
+}
+void IRadio::stopOrResumeStream()
+{
+	if( streamIsRunning() )
+	{
+		std::cout << "Stop stream\n";
+		stopStream();
+	}
+	else
+	{
+		std::cout << "Resume stream\n";
+		startStream();
+	}
 }
 
 void IRadio::increaseStreamNr()
