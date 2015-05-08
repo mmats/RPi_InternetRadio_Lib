@@ -16,7 +16,7 @@ IRadio::IRadio()
 {
 	// force headphones as standard audio output device
 	// 1=headphones
-	std::system("amixer -c 0 cset numid=3 1");
+	std::system("amixer --quiet -c 0 cset numid=3 1");
 
 	// force HDMI as standard audio output device
 	// 2=hdmi
@@ -36,7 +36,7 @@ IRadio::~IRadio()
 {
 	// set standard audio output device back to automatic
 	// 0=auto
-	std::system("amixer -c 0 cset numid=3 1");
+	std::system("amixer --quiet -c 0 cset numid=3 1");
 
 	stopStream();
 }
@@ -69,7 +69,6 @@ void IRadio::startStream()
 
 	if( (streamChildPID=fork()) == 0 )
 	{
-//		std::string cmd = "mplayer -really-quiet " + streamURL;
 		std::string cmd = "mplayer file > /dev/null 2>&1 " + streamURL;
 		std::system(cmd.c_str());
 		exit(0);
@@ -81,7 +80,7 @@ void IRadio::stopStream()
 {
 	if( streamIsRunning() )
 	{
-		system("killall mplayer");
+		system("killall --quiet mplayer");
 		streamRunning    = false;
 		streamURL        = "";
 		streamURLinfo    = "";
@@ -93,15 +92,9 @@ void IRadio::stopStream()
 void IRadio::stopOrResumeStream()
 {
 	if( streamIsRunning() )
-	{
-		std::cout << "Stop stream\n";
 		stopStream();
-	}
 	else
-	{
-		std::cout << "Resume stream\n";
 		startStream();
-	}
 }
 
 void IRadio::increaseStreamNr()
