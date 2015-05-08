@@ -153,64 +153,50 @@ std::string IRadio::getTitle()
 
 void IRadio::getStreamInfos()
 {
-    std::string fileStr, tmpStr;
-    std::string strStart, strEnd;
-    std::size_t foundStart, foundEnd;
+    std::string fileStr;
 
 	fileStr = getWebPageContent( infoURL, "tunein_info" );
 
-    strStart   = "TuneIn.payload";
-    foundStart = fileStr.find( strStart );
-    fileStr    = fileStr.substr( foundStart );
-    strEnd     = "}}}";
-    foundEnd   = fileStr.find( strEnd ) + strStart.length();
-    fileStr    = fileStr.substr( 0, foundEnd );
+	// get TuneIn content
+    fileStr = getInfoOutOfText( fileStr, "TuneIn.payload", "}}}" );
 
     // find stream name
-    strStart   = "\"description\":\"";
-    foundStart = fileStr.find( strStart );
-    tmpStr     = fileStr.substr( foundStart );
-    strEnd     = "\"";
-    foundEnd   = tmpStr.find( strEnd, strStart.length() );
-    streamName = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
+    streamName = getInfoOutOfText( fileStr, "\"description\":\"", "\"" );
+
+    // find stream URL info
+    streamURLinfo = getInfoOutOfText( fileStr, "\"StreamUrl\":\"", "\"" );
 
     // find song information
-    strStart   = "\"SongPlayingTitle\":";
-    foundStart = fileStr.find( strStart );
-    tmpStr     = fileStr.substr( foundStart );
-    strEnd     = ",";
-    foundEnd   = tmpStr.find( strEnd, strStart.length() );
-    tmpStr     = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
-    if( tmpStr == "null" )
+    fileStr = getInfoOutOfText( fileStr, "\"SongPlayingTitle\":", "," );
+    if( fileStr == "" )
     {
     	currentInterpret = "I";
     	currentTitle	 = "T";
     }
     else
     {
-    	strEnd     = " - ";
-    	foundEnd   = tmpStr.find( strEnd );
-    	currentInterpret = tmpStr.substr( foundEnd+strEnd.length(), tmpStr.length()-foundEnd-strEnd.length()-1 );
-    	currentTitle     = tmpStr.substr( 1, foundEnd-1 );
+    	std::string strEnd = " - ";
+    	std::size_t foundEnd   = fileStr.find( " - " );
+    	currentInterpret = fileStr.substr( foundEnd+strEnd.length(), fileStr.length()-foundEnd-strEnd.length()-1 );
+    	currentTitle     = fileStr.substr( 1, foundEnd-1 );
     }
 
-    // find stream URL info
-    strStart   = "\"StreamUrl\":\"";
-    foundStart = fileStr.find( strStart );
-    tmpStr     = fileStr.substr( foundStart );
-    strEnd     = "\"";
-    foundEnd   = tmpStr.find( strEnd, strStart.length() );
-    streamURLinfo  = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
-
-  	fileStr = getWebPageContent( streamURLinfo, "streamurl" );
-
     // find real stream URL
-    strStart   = "\"Url\": \"";
-	foundStart = fileStr.find( strStart );
-	tmpStr     = fileStr.substr( foundStart );
-	strEnd     = "\"";
-	foundEnd   = tmpStr.find( strEnd, strStart.length() );
-	streamURL  = tmpStr.substr( strStart.length(), foundEnd-strStart.length() );
+  	fileStr = getWebPageContent( streamURLinfo, "streamurl" );
+  	streamURL = getInfoOutOfText( fileStr, "\"Url\": \"", "\"" );
+}
+std::string IRadio::getInfoOutOfText( std::string text, std::string startStr, std::string endStr )
+{
+    std::string tmpStr;
+    std::size_t foundStart, foundEnd;
+
+    foundStart = text.find( startStr );
+    tmpStr     = text.substr( foundStart );
+    foundEnd   = tmpStr.find( endStr, startStr.length() );
+    tmpStr     = tmpStr.substr( startStr.length(), foundEnd-startStr.length() );
+    if( tmpStr == "null" )
+    	return "";
+    return tmpStr;
 }
 std::string IRadio::getWebPageContent( std::string URL, std::string fileName )
 {

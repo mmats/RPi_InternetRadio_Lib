@@ -26,6 +26,7 @@ public:
 	void getStreamInfos();
 
 private:
+	std::string getInfoOutOfText( std::string text, std::string startStr, std::string endStr );
 	std::string getWebPageContent( std::string URL, std::string fileName );
 	std::string getFileContent( std::string fileName );
 
