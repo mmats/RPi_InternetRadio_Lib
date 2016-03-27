@@ -25,6 +25,7 @@ IRadio::IRadio()
 	streamRunning		= false;
 	streamNr			= 0;
 	infoURL 			= "";
+	streamID            = "";
 	streamURL 			= "";
 	streamURLinfo 		= "";
 	streamName			= "";
@@ -69,7 +70,13 @@ void IRadio::startStream()
 
 	if( (streamChildPID=fork()) == 0 )
 	{
-		std::string cmd = "mplayer file > /dev/null 2>&1 " + streamURL;
+		std::string cmd{};
+		std::string ending = streamURL.substr( streamURL.length()-4, 3 );
+		if( ending == "pls" )
+			cmd = "mplayer file > /dev/null 2>&1 -playlist " + streamURL;
+		else
+			cmd = "mplayer file > /dev/null 2>&1 " + streamURL;
+		std::cout << "\n\n" << cmd << "\n\n";
 		std::system(cmd.c_str());
 		exit(0);
 		std::cout << "Child: Should never reach this line of code!\n";
@@ -160,11 +167,14 @@ void IRadio::getStreamInfos()
 	// get TuneIn content
     fileStr = getInfoOutOfText( fileStr, "TuneIn.payload", "}}}" );
 
+    // find stream ID
+    streamID = getInfoOutOfText( fileStr, "{\"Station\":{\"stationId\":",  "," );
+
     // find stream name
     streamName = getInfoOutOfText( fileStr, "\"description\":\"", "\"" );
 
     // find stream URL info
-    streamURLinfo = getInfoOutOfText( fileStr, "\"StreamUrl\":\"", "\"" );
+    streamURLinfo = "http://opml.radiotime.com/Tune.ashx?id=s" + streamID;
 
     // find song information
     fileStr = getInfoOutOfText( fileStr, "\"SongPlayingTitle\":", "," );
@@ -182,8 +192,7 @@ void IRadio::getStreamInfos()
     }
 
     // find real stream URL
-  	fileStr = getWebPageContent( streamURLinfo, "streamurl" );
-  	streamURL = getInfoOutOfText( fileStr, "\"Url\": \"", "\"" );
+    streamURL = getWebPageContent( streamURLinfo, "streamurl" );
 }
 std::string IRadio::getInfoOutOfText( std::string text, std::string startStr, std::string endStr )
 {

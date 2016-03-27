@@ -32,6 +32,7 @@ private:
 
 	bool 		streamRunning;
 	unsigned 	streamNr;
+	std::string streamID;
 	std::string streamURL;
 	std::string streamURLinfo;
 	std::string infoURL;
